@@ -11,6 +11,15 @@
 # counters are int
 # timers and gauges are float
 
+#[
+TODO:
+send date
+sampling
+global switch on/off
+multi-metrics in 1 UDP packet: UDP (udp): Listens for metrics on a UDP port. One UDP packet contains at least one StatsD metric. Multiple metrics can be received in a single packet if separated by the \n character.
+[statsd/server.md at master · statsd/statsd](https://github.com/statsd/statsd/blob/master/docs/server.md)
+]#
+
 import net,
   strutils,
   times
@@ -32,9 +41,16 @@ proc newStatdClient*(host="localhost", port=8125, prefix=""): StatsdClient =
     else: "$#." % prefix
   result.sock = newSocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, buffered = false)
 
+  # TODO: do we need to release at end of lifecycle?
+
 proc send_out(client: StatsdClient, msg: string) =
   ## Send raw data to the Statsd daemon
+  # echo msg
   client.sock.sendTo(client.hostname, client.port, msg)
+
+proc count*(client: StatsdClient, name: string, count=1.0) =
+  ## Increment a stat by "count"
+  client.send_out("$#$#:$#|c\n" % [client.computed_prefix, name, $count])
 
 proc incr*(client: StatsdClient, name: string, count=1) =
   ## Increment a stat by "count"
